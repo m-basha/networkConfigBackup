@@ -1,0 +1,44 @@
+- name: IOS Conf Backup
+  register: ios_bkp
+  ios_config:
+    backup: yes
+    backup_options:
+      filename: "{{ hostname }}.cfg"
+      dir_path: "{{ workspace }}/config"
+
+- name: Read Configuration File Content
+  set_fact:
+    cfg_content: "{{ lookup('file', '{{ workspace }}/config/{{ hostname }}.cfg') }}"
+
+- name: Parse Some Meta Data
+  delegate_to: localhost
+  ansible.netcommon.cli_parse:
+    text: "{{ item }}"
+    parser:
+      name: ansible.netcommon.textfsm
+      os: ios
+      command: readContent
+  register: metaData
+  with_items:
+    - "{{ cfg_content }}"
+
+- name: Set Timestamp
+  set_fact:
+    timestamp: "{{ metaData.results[0].parsed[0].day }} {{ metaData.results[0].parsed[0].month }} {{ metaData.results[0].parsed[0].year }} {{ metaData.results[0].parsed[0].time }}"
+
+- name: Convert Timestamp to Ansible datetime object
+  set_fact:
+    convTimestamp: "{{ timestamp | to_datetime('%d %b %Y %H:%M:%S') }}"
+
+- name: Render Meta Data
+  tags: render
+  template:
+    src: templates/metaFile.j2
+    dest: "{{ workspace }}/config/metaData_{{ hostname }}.csv"
+  vars:
+    fileName: "{{ item }}"
+    confType: "{{ item.split('.')[-1] }}"
+    changedBy: "{{ metaData.results[0].parsed[0].changedBy }}"
+    lastChange: "{{ convTimestamp }}"
+  with_items:
+    - "{{ ios_bkp.backup_path.split('config/')[1] }}"

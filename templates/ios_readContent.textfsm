@@ -1,0 +1,9 @@
+Value Required month (\S+)
+Value Required day (\d+)
+Value Required time ((?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d))
+Value Required year ([12][0-9]{3})
+Value Required changedBy (\S+)
+Value weekDay (\S+)
+
+Start
+  ^! Last configuration change at\s${time}\s\S+\s${weekDay}\s${month}\s${day}\s${year}\sby\s${changedBy} -> Record

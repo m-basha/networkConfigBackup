@@ -1,0 +1,12 @@
+---
+- name: Network Configuration Backup Global Playbook
+  hosts: all
+  gather_facts: no
+  connection: local
+  tasks:
+    - include_tasks: iosConf.yml
+      when: ansible_network_os == 'ios'
+
+    - include_tasks: iosxrConf.yml
+      when: ansible_network_os == 'iosxr'
+      tags: time
